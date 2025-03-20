@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 50px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    input, button, textarea { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+    .hidden { display: none; }
+    #emailList { margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    #loginMsg, #statusMsg { color: red; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    
+    <!-- Login Section -->
+    <div id="loginDiv">
+      <h2>Login</h2>
+      <input type="password" id="password" placeholder="Enter Admin Password" />
+      <button id="loginBtn">Login</button>
+      <div id="loginMsg"></div>
+    </div>
+    
+    <!-- Admin Section (hidden until logged in) -->
+    <div id="adminDiv" class="hidden">
+      <h2>Fetch Subscriber Emails</h2>
+      <button id="fetchBtn">Fetch Emails</button>
+      <div id="emailList"></div>
+      
+      <hr />
+      
+      <h2>Send Custom Email</h2>
+      <label for="subject">Subject:</label>
+      <input type="text" id="subject" placeholder="Email Subject" />
+      
+      <label for="message">Message:</label>
+      <textarea id="message" rows="5" placeholder="Email Content"></textarea>
+      
+      <button id="sendBtn">Send Email to All</button>
+      <div id="statusMsg"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // 1. Basic "Admin" Password Check
+    // ==============================
+    const adminPassword = "1q2w3e4r";  // Replace with your chosen password
+    const loginBtn = document.getElementById("loginBtn");
+    const loginMsg = document.getElementById("loginMsg");
+    const loginDiv = document.getElementById("loginDiv");
+    const adminDiv = document.getElementById("adminDiv");
+
+    loginBtn.addEventListener("click", () => {
+      const pwd = document.getElementById("password").value;
+      if (pwd === adminPassword) {
+        loginDiv.classList.add("hidden");
+        adminDiv.classList.remove("hidden");
+      } else {
+        loginMsg.textContent = "Incorrect password.";
+      }
+    });
+
+    // ==============================
+    // 2. Admin Functions
+    // ==============================
+    // Use your provided Apps Script Web App URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycby2agycKsaQknWmZIV_Wj6gjardHHzfisSRmiRt92R8SzzZp0nt0n4OMN2zrVB1j2rN/exec";
+
+    // Elements
+    const fetchBtn = document.getElementById("fetchBtn");
+    const emailListDiv = document.getElementById("emailList");
+    const sendBtn = document.getElementById("sendBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    // 2a. Fetch all emails
+    fetchBtn.addEventListener("click", () => {
+      // POST with action "fetch" to get the list of emails
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "fetch" })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === "success") {
+          displayEmailList(data.emails);
+        } else {
+          emailListDiv.innerHTML = "<p style='color:red;'>Error fetching emails.</p>";
+        }
+      })
+      .catch(error => {
+        console.error("Fetch Error:", error);
+        emailListDiv.innerHTML = "<p style='color:red;'>Request failed. Check console.</p>";
+      });
+    });
+
+    // Display emails in a table
+    function displayEmailList(emails) {
+      if (!emails || emails.length === 0) {
+        emailListDiv.innerHTML = "<p>No subscribers found.</p>";
+        return;
+      }
+      let html = "<table><tr><th>#</th><th>Email</th></tr>";
+      emails.forEach((email, index) => {
+        html += `<tr><td>${index + 1}</td><td>${email}</td></tr>`;
+      });
+      html += "</table>";
+      emailListDiv.innerHTML = html;
+    }
+
+    // 2b. Send Email to All
+    sendBtn.addEventListener("click", () => {
+      const subject = document.getElementById("subject").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      if (!subject || !message) {
+        statusMsg.style.color = "red";
+        statusMsg.textContent = "Please enter both subject and message.";
+        return;
+      }
+
+      // POST with action "send" to trigger email sending
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send",
+          subject: subject,
+          message: message
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === "success") {
+          statusMsg.style.color = "green";
+          statusMsg.textContent = "Emails sent successfully!";
+        } else {
+          statusMsg.style.color = "red";
+          statusMsg.textContent = "Error sending emails.";
+        }
+      })
+      .catch(error => {
+        console.error("Send Error:", error);
+        statusMsg.style.color = "red";
+        statusMsg.textContent = "Request failed. Check console.";
+      });
+    });
+  </script>
+</body>
+</html>
