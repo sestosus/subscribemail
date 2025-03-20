@@ -13,6 +13,8 @@
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     #loginMsg, #statusMsg { color: red; }
   </style>
+  <!-- Include jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -47,63 +49,43 @@
   </div>
 
   <script>
-    // ==============================
     // 1. Basic "Admin" Password Check
-    // ==============================
     const adminPassword = "1q2w3e4r";  // Replace with your chosen password
-    const loginBtn = document.getElementById("loginBtn");
-    const loginMsg = document.getElementById("loginMsg");
-    const loginDiv = document.getElementById("loginDiv");
-    const adminDiv = document.getElementById("adminDiv");
-
-    loginBtn.addEventListener("click", () => {
-      const pwd = document.getElementById("password").value;
+    $("#loginBtn").click(function(){
+      const pwd = $("#password").val();
       if (pwd === adminPassword) {
-        loginDiv.classList.add("hidden");
-        adminDiv.classList.remove("hidden");
+        $("#loginDiv").addClass("hidden");
+        $("#adminDiv").removeClass("hidden");
       } else {
-        loginMsg.textContent = "Incorrect password.";
+        $("#loginMsg").text("Incorrect password.");
       }
     });
 
-    // ==============================
-    // 2. Admin Functions
-    // ==============================
-    // Use your provided Apps Script Web App URL
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxf9MEhbNngcH_XOXqTjProLMTgDeeQSDNsyZ-Bk8EG7tef3KQa0TzrEjkRGNm2Yucc/exec";
+    // 2. Admin Functions using JSONP
+    const scriptURL = "https://script.google.com/macros/s/AKfycby2agycKsaQknWmZIV_Wj6gjardHHzfisSRmiRt92R8SzzZp0nt0n4OMN2zrVB1j2rN/exec";
 
-    // Elements
-    const fetchBtn = document.getElementById("fetchBtn");
-    const emailListDiv = document.getElementById("emailList");
-    const sendBtn = document.getElementById("sendBtn");
-    const statusMsg = document.getElementById("statusMsg");
-
-    // 2a. Fetch all emails
-    fetchBtn.addEventListener("click", () => {
-      // POST with action "fetch" to get the list of emails
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "fetch" })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.result === "success") {
-          displayEmailList(data.emails);
-        } else {
-          emailListDiv.innerHTML = "<p style='color:red;'>Error fetching emails.</p>";
+    // 2a. Fetch all emails via JSONP
+    $("#fetchBtn").click(function(){
+      $.ajax({
+        url: scriptURL,
+        dataType: "jsonp",  // Use JSONP
+        data: { action: "fetch" },
+        success: function(data) {
+          if (data.result === "success") {
+            displayEmailList(data.emails);
+          } else {
+            $("#emailList").html("<p style='color:red;'>Error fetching emails.</p>");
+          }
+        },
+        error: function() {
+          $("#emailList").html("<p style='color:red;'>Request failed. Check console.</p>");
         }
-      })
-      .catch(error => {
-        console.error("Fetch Error:", error);
-        emailListDiv.innerHTML = "<p style='color:red;'>Request failed. Check console.</p>";
       });
     });
 
-    // Display emails in a table
     function displayEmailList(emails) {
       if (!emails || emails.length === 0) {
-        emailListDiv.innerHTML = "<p>No subscribers found.</p>";
+        $("#emailList").html("<p>No subscribers found.</p>");
         return;
       }
       let html = "<table><tr><th>#</th><th>Email</th></tr>";
@@ -111,44 +93,33 @@
         html += `<tr><td>${index + 1}</td><td>${email}</td></tr>`;
       });
       html += "</table>";
-      emailListDiv.innerHTML = html;
+      $("#emailList").html(html);
     }
 
-    // 2b. Send Email to All
-    sendBtn.addEventListener("click", () => {
-      const subject = document.getElementById("subject").value.trim();
-      const message = document.getElementById("message").value.trim();
+    // 2b. Send Email to All via JSONP
+    $("#sendBtn").click(function(){
+      const subject = $("#subject").val().trim();
+      const message = $("#message").val().trim();
 
       if (!subject || !message) {
-        statusMsg.style.color = "red";
-        statusMsg.textContent = "Please enter both subject and message.";
+        $("#statusMsg").css("color", "red").text("Please enter both subject and message.");
         return;
       }
 
-      // POST with action "send" to trigger email sending
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "send",
-          subject: subject,
-          message: message
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.result === "success") {
-          statusMsg.style.color = "green";
-          statusMsg.textContent = "Emails sent successfully!";
-        } else {
-          statusMsg.style.color = "red";
-          statusMsg.textContent = "Error sending emails.";
+      $.ajax({
+        url: scriptURL,
+        dataType: "jsonp",  // Use JSONP
+        data: { action: "send", subject: subject, message: message },
+        success: function(data) {
+          if (data.result === "success") {
+            $("#statusMsg").css("color", "green").text("Emails sent successfully!");
+          } else {
+            $("#statusMsg").css("color", "red").text("Error sending emails.");
+          }
+        },
+        error: function() {
+          $("#statusMsg").css("color", "red").text("Request failed. Check console.");
         }
-      })
-      .catch(error => {
-        console.error("Send Error:", error);
-        statusMsg.style.color = "red";
-        statusMsg.textContent = "Request failed. Check console.";
       });
     });
   </script>
