@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Newsletter Signup</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 50px; }
+    .container { max-width: 400px; margin: 0 auto; }
+    input[type="email"] { width: 100%; padding: 10px; margin: 10px 0; }
+    button { padding: 10px 20px; }
+    .message { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Subscribe to Our Newsletter</h2>
+    <form id="signupForm">
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <button type="submit">Subscribe</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+  
+ <script>
+  const form = document.getElementById("signupForm");
+  const messageDiv = document.getElementById("message");
+  // Use your actual Apps Script Web App URL here:
+  const scriptURL = "https://script.google.com/macros/s/AKfycbyxTvvqwV7UoKUtdnt6OcX7TDC_lAvNxpiThFECRSDXJK20A0NSq8wB5SdJXC6pc9gj/exec";
+  
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    fetch(scriptURL, {
+      method: "POST",
+      mode: "no-cors", // This mode helps to avoid CORS issues in a basic setup
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({email: email})
+    })
+    .then(response => {
+      // Since mode is no-cors, we can't access the response details,
+      // but we assume the submission is successful.
+      messageDiv.textContent = "Thank you for subscribing!";
+      form.reset();
+    })
+    .catch(error => {
+      messageDiv.textContent = "There was an error. Please try again.";
+      console.error("Error!", error.message);
+    });
+  });
+</script>
+
+</body>
+</html>
